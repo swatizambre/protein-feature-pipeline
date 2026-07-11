@@ -1,0 +1,82 @@
+{
+  "n_residues": 306,
+  "angles_defined": {
+    "phi": 305,
+    "psi": 305,
+    "omega": 305
+  },
+  "composition_entropy_bits": 4.175651178379033,
+  "skew": {
+    "hydropathy": 0.10920307040214539,
+    "volume": -0.09856513142585754,
+    "burial": 0.23963241279125214,
+    "charge": -0.12813423573970795
+  },
+  "omega_trans_pct": 100.0,
+  "ss_proportions": {
+    "C": 0.4542483660130719,
+    "E": 0.27450980392156865,
+    "H": 0.27124183006535946
+  },
+  "max_abs_corr": 0.8197731222893149,
+  "burial_hydropathy_r": 0.2888111174106598,
+  "burial_by_ss_kruskal_p": 7.999230618171982e-12,
+  "restype_ss_chi2_p": 0.019455783098356244,
+  "local_edge_pct": 39.91013071895425,
+  "pca_evr": [
+    0.3944290578365326,
+    0.2164396047592163,
+    0.1577911376953125,
+    0.11181890219449997,
+    0.05629883334040642,
+    0.045280952006578445,
+    0.01300162635743618,
+    0.004939870908856392
+  ],
+  "pca_n_comp_90": 5,
+  "kmeans_ss_ari": 0.0028003820207388526,
+  "vif": {
+    "hydropathy": 3.1020171642303467,
+    "charge": 6.032812595367432,
+    "volume": 1.8262656927108765,
+    "polar": 10.580728530883789,
+    "aromatic": 1.7348294258117676,
+    "hbond_don": 11.564033508300781,
+    "hbond_acc": 6.738714694976807,
+    "burial": 1.1258913278579712
+  },
+  "sparsity": {
+    "charge": 0.8202614379084967,
+    "aromatic": 0.8758169934640523,
+    "hbond_don": 0.5751633986928104,
+    "hbond_acc": 0.6111111111111112
+  },
+  "mutual_info": {
+    "burial": 0.12775267515097388,
+    "hydropathy": 0.07674525442196822,
+    "volume": 0.038582764492687494,
+    "charge": 0.01846817229838238,
+    "polar": 0.0,
+    "aromatic": 0.0,
+    "hbond_don": 0.0,
+    "hbond_acc": 0.0
+  },
+  "roundtrip": {
+    "num_residues": 306,
+    "ss_source": "hbond",
+    "schema_version": "1.0",
+    "num_edges": 4896,
+    "restype_exact_match": true,
+    "ss_exact_match": true,
+    "coords_max_abs_error": 0.0,
+    "phi_max_abs_error_deg": 0.0,
+    "psi_max_abs_error_deg": 0.0,
+    "omega_max_abs_error_deg": 0.0,
+    "burial_max_abs_error": 0.0,
+    "physchem_max_abs_error": 1.1920928955078125e-07,
+    "edge_dist_mean_abs_error_A": 0.0001796670985640958,
+    "edge_dist_max_abs_error_A": 0.0017213821411132812,
+    "edge_dist_from_coords_max_error_A": 9.5367431640625e-07,
+    "passed": true
+  }
+}

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Structure feature extraction, encoding, and round-trip validation for generative protein workflows." />
+  <title>Protein Feature Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #e8ece9;
+      --bg-deep: #d5ddd8;
+      --surface: #f7f9f8;
+      --ink: #121816;
+      --muted: #4d5a54;
+      --line: #b7c2bc;
+      --line-strong: #8a9891;
+      --accent: #0f5c4c;
+      --accent-hover: #0a463a;
+      --accent-soft: #d7ebe4;
+      --ok: #0d5c32;
+      --ok-bg: #d4eadc;
+      --bad: #8a1f1f;
+      --bad-bg: #f0d6d6;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --radius: 2px;
+      --shadow: 0 1px 0 rgba(18, 24, 22, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(15, 92, 76, 0.06) 0%, transparent 28%),
+        repeating-linear-gradient(
+          -12deg,
+          transparent,
+          transparent 11px,
+          rgba(18, 24, 22, 0.015) 11px,
+          rgba(18, 24, 22, 0.015) 12px
+        ),
+        linear-gradient(160deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+
+    .shell {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem 3rem;
+    }
+
+    /* —— header —— */
+    .topbar {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 2rem;
+      animation: rise 0.45s ease-out both;
+    }
+    .brand {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .meta {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .meta .dot { color: var(--line-strong); }
+    .meta .live {
+      color: var(--ok);
+      font-weight: 500;
+    }
+
+    /* —— hero —— */
+    .hero {
+      margin-bottom: 1.75rem;
+      animation: rise 0.55s ease-out 0.05s both;
+    }
+    .hero h1 {
+      margin: 0 0 0.65rem;
+      font-size: clamp(1.75rem, 4vw, 2.35rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      max-width: 18ch;
+    }
+    .hero p {
+      margin: 0;
+      max-width: 38rem;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.55;
+      font-weight: 400;
+    }
+
+    .pipeline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: 1.25rem 0 0;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .pipeline span {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 0.28rem 0.5rem;
+    }
+    .pipeline .sep {
+      border: none;
+      background: transparent;
+      padding: 0.28rem 0.15rem;
+      color: var(--line-strong);
+    }
+
+    /* —— work surface —— */
+    .workspace {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      animation: rise 0.6s ease-out 0.1s both;
+    }
+    .workspace-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(15, 92, 76, 0.04);
+    }
+    .workspace-head h2 {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .workspace-body { padding: 1.15rem 1rem 1.25rem; }
+
+    label.drop {
+      display: block;
+      border: 1px dashed var(--line-strong);
+      background: #eef2f0;
+      padding: 1.75rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+    label.drop:hover,
+    label.drop.drag {
+      border-color: var(--accent);
+      border-style: solid;
+      background: var(--accent-soft);
+    }
+    label.drop .title {
+      display: block;
+      font-weight: 600;
+      font-size: 0.98rem;
+      margin-bottom: 0.3rem;
+    }
+    label.drop .sub {
+      display: block;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    label.drop .spec {
+      display: block;
+      margin-top: 0.65rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+    input[type="file"] { display: none; }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 0.85rem;
+      min-height: 1.4rem;
+      font-size: 0.88rem;
+    }
+    .file-row .name {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-row .empty { color: var(--muted); font-family: var(--sans); }
+
+    button.primary {
+      width: 100%;
+      margin-top: 0.95rem;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 0.82rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.12s ease;
+    }
+    button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+    button.primary:active:not(:disabled) { transform: translateY(1px); }
+    button.primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin-top: 0.75rem;
+      min-height: 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+    #status.active { color: var(--accent); }
+
+    #error {
+      display: none;
+      margin-top: 0.85rem;
+      padding: 0.7rem 0.8rem;
+      border-left: 3px solid var(--bad);
+      background: var(--bad-bg);
+      color: var(--bad);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+    #error.visible { display: block; animation: rise 0.25s ease-out; }
+
+    /* —— results —— */
+    #results {
+      display: none;
+      margin-top: 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    #results.visible {
+      display: block;
+      animation: rise 0.4s ease-out;
+    }
+    .results-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(15, 92, 76, 0.04);
+    }
+    .results-head h2 {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .badge {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.55rem;
+      border: 1px solid transparent;
+    }
+    .badge.ok {
+      color: var(--ok);
+      background: var(--ok-bg);
+      border-color: #a8d0b6;
+    }
+    .badge.bad {
+      color: var(--bad);
+      background: var(--bad-bg);
+      border-color: #d4a0a0;
+    }
+    .results-body { padding: 1rem; }
+    .result-note {
+      margin: 0 0 1rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    table.metrics {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-bottom: 1.1rem;
+    }
+    table.metrics th,
+    table.metrics td {
+      text-align: left;
+      padding: 0.45rem 0.35rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    table.metrics th {
+      width: 42%;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    table.metrics td {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-label {
+      margin: 0 0 0.45rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .links a {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 0.4rem 0.6rem;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .links a:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    #plot {
+      display: none;
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    #plot.visible { display: block; }
+
+    footer {
+      margin-top: 1.75rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.75rem;
+      animation: rise 0.5s ease-out 0.15s both;
+    }
+    footer code {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 560px) {
+      .hero h1 { max-width: none; }
+      table.metrics th { width: 48%; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">Protein Feature Pipeline</div>
+      <div class="meta">
+        <span class="live" id="health">● SYSTEM</span>
+        <span class="dot">·</span>
+        <span>v1.1.0</span>
+        <span class="dot">·</span>
+        <span>LOCAL</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h1>Protein Feature Pipeline</h1>
+      <p>
+        Production feature layer for structure-based generative workflows.
+        Ingest a PDB, emit deterministic residue-graph tensors, decode, and
+        validate round-trip fidelity — without training a model.
+      </p>
+      <div class="pipeline" aria-label="Pipeline stages">
+        <span>Extract</span><span class="sep">→</span>
+        <span>Encode</span><span class="sep">→</span>
+        <span>Decode</span><span class="sep">→</span>
+        <span>Validate</span>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="Job input">
+      <div class="workspace-head">
+        <h2>Job input</h2>
+        <span class="meta" id="limitHint">Upload limit —</span>
+      </div>
+      <div class="workspace-body">
+        <label class="drop" id="drop">
+          <span class="title">Select structure file</span>
+          <span class="sub">Click to browse, or drop a file into this zone</span>
+          <span class="spec">ACCEPTED · .pdb / .ent</span>
+          <input type="file" id="file" accept=".pdb,.ent,chemical/x-pdb" />
+        </label>
+        <div class="file-row">
+          <span class="name empty" id="chosen">No file loaded</span>
+        </div>
+        <button class="primary" id="run" type="button" disabled>Execute pipeline</button>
+        <div id="status" role="status" aria-live="polite"></div>
+        <div id="error" role="alert"></div>
+      </div>
+    </section>
+
+    <section id="results" aria-label="Pipeline results">
+      <div class="results-head">
+        <h2>Run output</h2>
+        <span class="badge" id="passBadge"></span>
+      </div>
+      <div class="results-body">
+        <p class="result-note" id="resultNote"></p>
+        <table class="metrics" aria-label="Run metrics">
+          <tbody id="summary"></tbody>
+        </table>
+        <p class="section-label">Artifacts</p>
+        <div class="links" id="links"></div>
+        <p class="section-label" id="plotLabel" hidden>Feature summary</p>
+        <img id="plot" alt="Feature summary visualization" />
+      </div>
+    </section>
+
+    <footer>
+      <span>Processing is local to this host. Files are not retained beyond the job TTL.</span>
+      <span>CLI equivalent: <code>protein-features --pdb &lt;file&gt;</code></span>
+    </footer>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("file");
+    const drop = document.getElementById("drop");
+    const chosen = document.getElementById("chosen");
+    const runBtn = document.getElementById("run");
+    const status = document.getElementById("status");
+    const errorEl = document.getElementById("error");
+    const results = document.getElementById("results");
+    const summary = document.getElementById("summary");
+    const links = document.getElementById("links");
+    const plot = document.getElementById("plot");
+    const plotLabel = document.getElementById("plotLabel");
+    const passBadge = document.getElementById("passBadge");
+    const resultNote = document.getElementById("resultNote");
+    const healthEl = document.getElementById("health");
+    const limitHint = document.getElementById("limitHint");
+
+    const DOWNLOAD_LABELS = {
+      "encoded.npz": "encoded.npz · tensors",
+      "schema.json": "schema.json · layout",
+      "validation_report.json": "validation_report.json",
+      "features.png": "features.png · plot",
+    };
+
+    const SS_LABELS = {
+      hbond: "H-bond method",
+      dssp: "DSSP",
+      ramachandran: "Ramachandran fallback",
+    };
+
+    let selected = null;
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
+    function setFile(f) {
+      selected = f;
+      if (f) {
+        chosen.textContent = f.name + "  ·  " + formatSize(f.size);
+        chosen.classList.remove("empty");
+      } else {
+        chosen.textContent = "No file loaded";
+        chosen.classList.add("empty");
+      }
+      runBtn.disabled = !f;
+      errorEl.classList.remove("visible");
+      status.textContent = "";
+      status.classList.remove("active");
+    }
+
+    fileInput.addEventListener("change", () => setFile(fileInput.files[0] || null));
+
+    ["dragenter", "dragover"].forEach((ev) => {
+      drop.addEventListener(ev, (e) => {
+        e.preventDefault();
+        drop.classList.add("drag");
+      });
+    });
+    ["dragleave", "drop"].forEach((ev) => {
+      drop.addEventListener(ev, (e) => {
+        e.preventDefault();
+        drop.classList.remove("drag");
+      });
+    });
+    drop.addEventListener("drop", (e) => {
+      const f = e.dataTransfer.files[0];
+      if (f) {
+        fileInput.files = e.dataTransfer.files;
+        setFile(f);
+      }
+    });
+
+    function friendlyError(msg) {
+      const raw = String(msg || "Pipeline failed");
+      if (/upload exceeds/i.test(raw)) {
+        return "Upload rejected: file exceeds the configured size limit.";
+      }
+      if (/please upload a \.pdb/i.test(raw)) {
+        return "Invalid input type. Provide a .pdb or .ent structure file.";
+      }
+      if (/pdb file not found|no atoms|invalid/i.test(raw)) {
+        return "Unable to parse a usable protein structure (ATOM records required).";
+      }
+      return raw;
+    }
+
+    function showError(msg) {
+      errorEl.textContent = friendlyError(msg);
+      errorEl.classList.add("visible");
+      results.classList.remove("visible");
+    }
+
+    function setStatus(text, active) {
+      status.textContent = text;
+      status.classList.toggle("active", !!active);
+    }
+
+    async function refreshHealth() {
+      try {
+        const r = await fetch("/api/health");
+        if (!r.ok) throw new Error("down");
+        const data = await r.json();
+        healthEl.textContent = "● ONLINE";
+        healthEl.className = "live";
+        if (data.max_upload_mb) {
+          limitHint.textContent = "Limit " + data.max_upload_mb + " MB";
+        }
+      } catch (_) {
+        healthEl.textContent = "● OFFLINE";
+        healthEl.style.color = "var(--bad)";
+        limitHint.textContent = "Service unreachable";
+      }
+    }
+
+    runBtn.addEventListener("click", async () => {
+      if (!selected) return;
+      errorEl.classList.remove("visible");
+      results.classList.remove("visible");
+      plot.classList.remove("visible");
+      plotLabel.hidden = true;
+      runBtn.disabled = true;
+      setStatus("RUNNING · extract → encode → decode → validate", true);
+
+      const body = new FormData();
+      body.append("file", selected);
+
+      try {
+        const res = await fetch("/api/run", { method: "POST", body });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          let detail = data.detail;
+          if (Array.isArray(detail)) {
+            detail = detail.map((d) => d.msg || JSON.stringify(d)).join("; ");
+          }
+          throw new Error(detail || res.statusText || "Request failed");
+        }
+
+        const passed = data.validation && data.validation.passed;
+        passBadge.textContent = passed ? "Round-trip PASS" : "Round-trip FAIL";
+        passBadge.className = "badge " + (passed ? "ok" : "bad");
+        resultNote.textContent = passed
+          ? "Lossless fields recovered within tolerance. Residue identity, secondary structure, coordinates, angles, burial, and physicochemical channels are consistent."
+          : "Consistency check failed on one or more lossless fields. Inspect validation_report.json for per-metric errors.";
+
+        const shapes = data.shapes || {};
+        const rows = [
+          ["Input file", data.filename],
+          ["Residues retained", data.num_residues],
+          ["SS method", SS_LABELS[data.ss_source] || data.ss_source || "—"],
+          ["Node features", (shapes.node_features || []).join(" × ") || "—"],
+          ["Graph edges (kNN)", shapes.edge_index ? shapes.edge_index[1] : "—"],
+          ["Edge features", (shapes.edge_features || []).join(" × ") || "—"],
+        ];
+        summary.innerHTML = rows
+          .map(([k, v]) => "<tr><th scope=\"row\">" + k + "</th><td>" + v + "</td></tr>")
+          .join("");
+
+        links.innerHTML = "";
+        const downloads = data.downloads || {};
+        Object.keys(downloads).forEach((name) => {
+          const a = document.createElement("a");
+          a.href = downloads[name];
+          a.textContent = DOWNLOAD_LABELS[name] || name;
+          a.download = name;
+          a.title = name;
+          links.appendChild(a);
+        });
+
+        if (data.plot && downloads["features.png"]) {
+          plot.src = downloads["features.png"] + "?t=" + Date.now();
+          plot.classList.add("visible");
+          plotLabel.hidden = false;
+        }
+
+        results.classList.add("visible");
+        setStatus("COMPLETE · artifacts ready", false);
+        results.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } catch (err) {
+        setStatus("", false);
+        showError(String(err.message || err));
+      } finally {
+        runBtn.disabled = !selected;
+      }
+    });
+
+    refreshHealth();
+  </script>
+</body>
+</html>

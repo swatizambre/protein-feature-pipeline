@@ -1,0 +1,44 @@
+{
+  "ligand": "4WI",
+  "ligand_atoms": 68,
+  "ligand_heavy_formula": "C23F3N5O4",
+  "ligand_bonds": 70,
+  "covalent_to_protein": [
+    "CYS145:SG"
+  ],
+  "pocket_atoms": 128,
+  "pocket_residues": [
+    "LEU27",
+    "HIS41",
+    "MET49",
+    "PRO52",
+    "TYR54",
+    "PHE140",
+    "LEU141",
+    "ASN142",
+    "GLY143",
+    "SER144",
+    "CYS145",
+    "HIS163",
+    "HIS164",
+    "MET165",
+    "GLU166",
+    "LEU167",
+    "PRO168",
+    "HIS172",
+    "VAL186",
+    "ASP187",
+    "ARG188",
+    "GLN189",
+    "THR190",
+    "ALA191",
+    "GLN192"
+  ],
+  "contacts_total": 103,
+  "contacts_by_type": {
+    "polar": 73,
+    "hydrophobic": 17,
+    "hbond": 13
+  },
+  "cutoff_A": 5.0
+}

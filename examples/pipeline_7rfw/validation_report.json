@@ -1,0 +1,18 @@
+{
+  "num_residues": 306,
+  "ss_source": "hbond",
+  "schema_version": "1.0",
+  "num_edges": 4896,
+  "restype_exact_match": true,
+  "ss_exact_match": true,
+  "coords_max_abs_error": 0.0,
+  "phi_max_abs_error_deg": 0.0,
+  "psi_max_abs_error_deg": 0.0,
+  "omega_max_abs_error_deg": 0.0,
+  "burial_max_abs_error": 0.0,
+  "physchem_max_abs_error": 1.1920928955078125e-07,
+  "edge_dist_mean_abs_error_A": 0.0001796670985640958,
+  "edge_dist_max_abs_error_A": 0.0017213821411132812,
+  "edge_dist_from_coords_max_error_A": 9.5367431640625e-07,
+  "passed": true
+}

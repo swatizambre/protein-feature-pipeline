@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Test / lint / type caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Ad-hoc pipeline outputs (keep curated examples/)
+out_*/
+output/
+analysis_*/
+*.npz
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Personal / local docs (only USER_MANUAL ships with the repo)
+docs/*
+!docs/USER_MANUAL.md
+
+# Commit curated demo runs (override *.npz above)
+!examples/
+!examples/**
+!examples/**/*.npz
+!examples/**/*.png
+!examples/**/*.json
+!examples/**/*.md
