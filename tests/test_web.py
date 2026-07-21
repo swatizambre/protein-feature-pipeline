@@ -84,11 +84,11 @@ def test_resolve_listen_port_fail_fast_when_busy():
 
 
 def test_resolve_listen_port_uses_preferred_when_free():
+    import socket
+
     from protein_features.web.app import resolve_listen_port
 
     # Ephemeral bind to discover a free port, then release and resolve it.
-    import socket
-
     probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     probe.bind(("127.0.0.1", 0))
     host, port = probe.getsockname()[:2]

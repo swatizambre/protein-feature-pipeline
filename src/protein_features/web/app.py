@@ -291,7 +291,8 @@ def main(argv=None):
     except OSError as e:
         # Race: port was free at check time, taken before bind.
         winerror = getattr(e, "winerror", None)
-        busy = e.errno in (errno.EADDRINUSE, getattr(errno, "WSAEADDRINUSE", 10048)) or winerror == 10048
+        wsa_inuse = getattr(errno, "WSAEADDRINUSE", 10048)
+        busy = e.errno in (errno.EADDRINUSE, wsa_inuse) or winerror == 10048
         if busy:
             raise SystemExit(
                 f"Failed to bind {args.host}:{port} (address already in use).\n"
